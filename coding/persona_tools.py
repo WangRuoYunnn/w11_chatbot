@@ -559,7 +559,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from io import BytesIO
 
-pdfmetrics.registerFont(TTFont("Montserrat", "/workspaces/w11_chatbot/pages/Montserrat-Bold.ttf"))
+# pdfmetrics.registerFont(TTFont("Montserrat", "/workspaces/w11_chatbot/pages/Montserrat-Bold.ttf"))
 
 
 def create_pdf_with_resources_on_image(
