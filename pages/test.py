@@ -50,7 +50,7 @@ def pdf_to_png(pdf_path_or_bytes):
 
 
 def main():
-    st.title("🧑\u200d💼 Ideal Persona")        
+    st.title("💼 Ideal Persona")        
 
     with st.sidebar:
         paging()

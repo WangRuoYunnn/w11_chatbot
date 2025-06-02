@@ -71,6 +71,7 @@ for cid, info in cid2info.items():
             st.image(skill_path, use_column_width=True)
         elif skills:
             labels, values = zip(*skills.items())
+            boosted_values = [v + 50 for v in values]
             fig, ax = plt.subplots(figsize=(6, 4))
             ax.barh(labels, values)
             ax.set_title(f"Top 技能：{info['category']}", fontproperties=my_font)

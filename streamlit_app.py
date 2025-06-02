@@ -1,8 +1,12 @@
-from openai import OpenAI
 import time
 import re
 from dotenv import load_dotenv
-import os
+import json, os
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+from matplotlib import font_manager as fm
+from collections import Counter
+import pandas as pd
 
 # Import ConversableAgent class
 import autogen
@@ -12,6 +16,8 @@ from autogen.code_utils import content_str
 from coding.constant import JOB_DEFINITION, RESPONSE_FORMAT
 from coding.utils import paging
 import streamlit as st
+from openai import OpenAI
+
 
 # Load environment variables from .env file
 load_dotenv(override=True)
@@ -20,10 +26,6 @@ load_dotenv(override=True)
 # URL configurations
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
 GEMINI_API_KEY_2 = os.getenv('OPEN_API_KEY', None)
-
-placeholderstr = "Input anything you want"
-user_name = "Group7"
-user_image = "https://www.w3schools.com/howto/img_avatar.png"
 
 seed = 42
 
@@ -57,126 +59,120 @@ user_proxy = UserProxyAgent(
     is_termination_msg=lambda x: content_str(x.get("content")).find("ALL DONE") >= 0,
 )
 
-# Function Declaration 
+# ---------- 設定路徑 ----------
+JSON_PATH = "data/cluster_visual_data_final_v4_described.json"
+WC_DIR = "images/wc_combo"
+SKILL_DIR = "images/skills"
+FONT_PATH = "fonts/msyh.ttc"
 
-def stream_data(stream_str):
-    for word in stream_str.split(" "):
-        yield word + " "
-        time.sleep(0.05)
+# ---------- 載入資料 ----------
+with open(JSON_PATH, encoding="utf-8") as f:
+    clusters = json.load(f)
+cid2info = {c["cluster_id"]: c for c in clusters}
 
+# ---------- 字體設定 ----------
+my_font = fm.FontProperties(fname=FONT_PATH)
+plt.rcParams['font.family'] = my_font.get_name()
+
+# ---------- UI ----------
+st.set_page_config(page_title="實習類型探索", layout="wide")
+st.title("📊 實習類型探索｜文字雲 × 技能圖")
+
+# ---------- 說明文字 ----------
+st.markdown("""
+是否在為該投哪類實習而猶豫？
+            
+本頁透過文字探勘技術，將實習資料分為七大類型，以「文字雲」與「技能圖」呈現各群的關鍵特徵，快速掌握職缺方向！
+
+🔍 點選每一類即可查看關鍵技能、典型職稱與說明建議，再到實習導航篩選出專屬於你的職缺！
+""")
+
+# 展示每一群類別的簡介卡 + 展開按鈕
+for cid, info in cid2info.items():
+    with st.expander(f"{cid+1}｜{info['category']}", expanded=False):
+        safe_name = info["category"].replace("/", "_").replace(" ", "")
+
+        st.markdown(f"**技能關鍵詞：** {info['skills_keywords']}")
+        st.markdown(f"**典型職稱：** {info['titles']}")
+        st.markdown(f"{info['summary']}")
+        #st.markdown(f"**📊 職缺筆數：** {info['count']}")
+
+        # ---------- 文字雲 ----------
+        st.markdown("### ☁️ 四字 + 二字組合文字雲")
+        wc_path = os.path.join(WC_DIR, f"wordcloud_combo_{cid}_{safe_name}.png")
+        if os.path.exists(wc_path):
+            st.image(wc_path, use_column_width=True)
+        else:
+            # 即時繪圖
+            words = info["word_text"].split()
+            quads = [w for w in words if len(w) == 4]
+            bigrams = [w1 + w2 for w1, w2 in zip(words[:-1], words[1:]) if len(w1) == len(w2) == 2]
+            terms = quads + bigrams
+            wc = WordCloud(font_path=FONT_PATH, width=800, height=400, background_color="white")
+            fig, ax = plt.subplots(figsize=(8, 4))
+            ax.imshow(wc.generate_from_frequencies(Counter(terms)))
+            ax.axis("off")
+            st.pyplot(fig)
+
+        # ---------- 技能圖 ----------
+        st.markdown("### 🛠️ 技能長條圖")
+        skill_path = os.path.join(SKILL_DIR, f"skills_{cid}_{safe_name}.png")
+        skills = info["skills_count"]
+
+        if os.path.exists(skill_path):
+            st.image(skill_path, use_column_width=True)
+        elif skills:
+            labels, values = zip(*skills.items())
+            import numpy as np
+            boosted_values = [int(np.sqrt(v) * 15) for v in values]
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.barh(labels, boosted_values)
+            ax.set_title(f"Top 技能：{info['category']}", fontproperties=my_font)
+            ax.set_yticklabels(labels, fontproperties=my_font)
+            ax.invert_yaxis()
+            st.pyplot(fig)
+        else:
+            st.info("此群尚無技能統計圖。")
+
+
+# -----------page setting---------------
 def save_lang():
-    st.session_state['lang_setting'] = st.session_state.get("language_select")
+    st.session_state["lang_setting"] = st.session_state.get("language_select")
+
+user_image = "https://www.w3schools.com/howto/img_avatar.png"
 
 def main():
-    st.set_page_config(
-        page_title='K-Assistant - The Residemy Agent',
-        layout='wide',
-        initial_sidebar_state='auto',
-        menu_items={
-            'Get Help': 'https://streamlit.io/',
-            'Report a bug': 'https://github.com',
-            'About': 'About your application: **Hello world**'
-            },
-        page_icon="img/favicon.ico"
-    )
+    # merge_csv()
 
-    # Show title and description.
-    st.title(f"💬 {user_name}'s Chatbot")
+    if "lang_setting" not in st.session_state:
+        st.session_state.lang_setting = "English"
+
+    if "search_keywords" not in st.session_state:
+        st.session_state.search_keywords = []
+    if "result_df" not in st.session_state:
+        st.session_state.result_df = pd.DataFrame()
+    if "selected_jobs" not in st.session_state:
+        st.session_state.selected_jobs = []
+    if "saved_jobs" not in st.session_state:
+        st.session_state.saved_jobs = []
+    if "hidden_saved_jobs" not in st.session_state:
+        st.session_state.hidden_saved_jobs = set()
+    if "aggrid_key" not in st.session_state:
+        st.session_state.aggrid_key = "job_grid"
 
     with st.sidebar:
         paging()
-        selected_lang = st.selectbox("Language", ["English", "繁體中文"], index=0, on_change=save_lang, key="language_select")
-        if 'lang_setting' in st.session_state:
-            lang_setting = st.session_state['lang_setting']
-        else:
-            lang_setting = selected_lang
-            st.session_state['lang_setting'] = lang_setting
-
-        st_c_1 = st.container(border=True)
-        with st_c_1:
-            st.image("https://www.w3schools.com/howto/img_avatar.png")
-
-    st_c_chat = st.container(border=True)
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    else:
-        for msg in st.session_state.messages:
-            if msg["role"] == "user":
-                if user_image:
-                    st_c_chat.chat_message(msg["role"],avatar=user_image).markdown((msg["content"]))
-                else:
-                    st_c_chat.chat_message(msg["role"]).markdown((msg["content"]))
-            elif msg["role"] == "assistant":
-                st_c_chat.chat_message(msg["role"]).markdown((msg["content"]))
-            else:
-                try:
-                    image_tmp = msg.get("image")
-                    if image_tmp:
-                        st_c_chat.chat_message(msg["role"],avatar=image_tmp).markdown((msg["content"]))
-                except:
-                    st_c_chat.chat_message(msg["role"]).markdown((msg["content"]))
-
-
-    story_template = ("Give me a story started from '##PROMPT##'."
-                      f"And remeber to mention user's name {user_name} in the end. Add some emoji in the end of each sentence."
-                      f"Please express in {lang_setting}")
-
-    classification_template = ("You are a classification agent, your job is to classify what ##PROMPT## is according to the job definition list in <JOB_DEFINITION>"
-    "<JOB_DEFINITION>"
-    f"{JOB_DEFINITION}"
-    "</JOB_DEFINITION>"
-    "Please output in JSON-format only."
-    "JSON-format is as below:"
-    f"{RESPONSE_FORMAT}"
-    "Let's think step by step."
-    f"Please output in {lang_setting}"
-    )
-
-    def generate_response(prompt):
-
-        # prompt_template = f"Give me a story started from '{prompt}'"
-        prompt_template = story_template.replace('##PROMPT##',prompt)
-        # prompt_template = classification_template.replace('##PROMPT##',prompt)
-        result = user_proxy.initiate_chat(
-        recipient=assistant,
-        message=prompt_template
+        selected_lang = st.selectbox(
+            "Language",
+            ["English", "繁體中文"],
+            index=0 if st.session_state.lang_setting == "English" else 1,
+            on_change=save_lang,
+            key="language_select",
         )
+        lang_setting = st.session_state.get("lang_setting", selected_lang)
+        st.session_state["lang_setting"] = lang_setting
 
-        response = result.summary
-        return response
-
-    def show_chat_history(chat_hsitory):
-        for entry in chat_hsitory:
-            role = entry.get('role')
-            name = entry.get('name')
-            content = entry.get('content')
-            st.session_state.messages.append({"role": f"{role}", "content": content})
-
-            if len(content.strip()) != 0: 
-                if 'ALL DONE' in content:
-                    return 
-                else: 
-                    if role != 'assistant':
-                        st_c_chat.chat_message(f"{role}").write((content))
-                    else:
-                        st_c_chat.chat_message("user",avatar=user_image).write(content)
-    
-        return 
-
-    # Chat function section (timing included inside function)
-    def chat(prompt: str):
-        st_c_chat.chat_message("user",avatar=user_image).write(prompt)
-        st.session_state.messages.append({"role": "user", "content": prompt})
-
-        response = generate_response(prompt)
-
-        st_c_chat.chat_message("assistant").write(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        
-    
-    if prompt := st.chat_input(placeholder=placeholderstr, key="chat_bot"):
-        chat(prompt)
+        st.image(user_image)
 
 if __name__ == "__main__":
     main()
