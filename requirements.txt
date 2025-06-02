@@ -8,3 +8,8 @@ beautifulsoup4
 wordcloud
 matplotlib
 streamlit-aggrid
+google-generativeai
+python-dotenv
+reportlab
+PyMuPDF
+pdf2image

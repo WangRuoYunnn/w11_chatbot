@@ -9,6 +9,7 @@ def paging():
     st.page_link("streamlit_app.py", label="Home", icon="🏠")
     st.page_link("pages/textmining.py", label="實習類型探索｜文字雲 × 技能圖", icon="📊")
     st.page_link("pages/teacher_agent.py", label="實習職缺導航", icon="🔍")
+    st.page_link("pages/test.py", label="Ideal Persona", icon="🧑‍💼")
     
 
 def display_session_msg(container_obj, user_image: Optional[str] = None):
