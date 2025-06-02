@@ -250,7 +250,7 @@ def main():
 
     if st.session_state.saved_jobs:
         export_df = pd.DataFrame(st.session_state.saved_jobs)
-        export_df.to_csv("pages/saved_jobs.csv", index=False, encoding='utf-8-sig', encode="utf-8-sig")
+        export_df.to_csv("pages/saved_jobs.csv", index=False, encoding='utf-8-sig')
         csv = export_df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
         st.download_button(
             label="📥 點我下載 CSV",
