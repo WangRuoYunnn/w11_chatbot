@@ -4,6 +4,8 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from collections import Counter
+from coding.utils import paging
+import pandas as pd
 
 # ---------- 設定路徑 ----------
 JSON_PATH = "data/cluster_visual_data_final_v4_described.json"
@@ -77,3 +79,46 @@ for cid, info in cid2info.items():
             st.pyplot(fig)
         else:
             st.info("此群尚無技能統計圖。")
+
+
+# -----------page setting---------------
+def save_lang():
+    st.session_state["lang_setting"] = st.session_state.get("language_select")
+
+user_image = "https://www.w3schools.com/howto/img_avatar.png"
+
+def main():
+    # merge_csv()
+
+    if "lang_setting" not in st.session_state:
+        st.session_state.lang_setting = "English"
+
+    if "search_keywords" not in st.session_state:
+        st.session_state.search_keywords = []
+    if "result_df" not in st.session_state:
+        st.session_state.result_df = pd.DataFrame()
+    if "selected_jobs" not in st.session_state:
+        st.session_state.selected_jobs = []
+    if "saved_jobs" not in st.session_state:
+        st.session_state.saved_jobs = []
+    if "hidden_saved_jobs" not in st.session_state:
+        st.session_state.hidden_saved_jobs = set()
+    if "aggrid_key" not in st.session_state:
+        st.session_state.aggrid_key = "job_grid"
+
+    with st.sidebar:
+        paging()
+        selected_lang = st.selectbox(
+            "Language",
+            ["English", "繁體中文"],
+            index=0 if st.session_state.lang_setting == "English" else 1,
+            on_change=save_lang,
+            key="language_select",
+        )
+        lang_setting = st.session_state.get("lang_setting", selected_lang)
+        st.session_state["lang_setting"] = lang_setting
+
+        st.image(user_image)
+
+if __name__ == "__main__":
+    main()
