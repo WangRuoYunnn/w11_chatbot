@@ -26,7 +26,11 @@ from coding.persona_tools import (
 # ------------------------
 i18n = {
     "zh": {
+        "menu_header": "🔧 選單",
         "title": "💼｜實習人物誌｜",
+        "nav_explore": "｜實習類型探索｜文字雲 × 技能圖",
+        "nav_navigator": "｜實習職缺導航｜",
+        "nav_profile": "｜實習人物誌｜",
         "language_label": "語言切換 (Language)",
         "selected_lang": "已選語言：",
         "download_button": "📄 下載您的個人化配置檔",
@@ -36,12 +40,16 @@ i18n = {
     },
     "en": {
         "title": "💼｜Ideal Persona｜",
+        "nav_explore": "Internship Explorer｜Word Cloud × Skill Chart",
+        "nav_navigator": "Internship Navigator",
+        "nav_profile": "Ideal Persona",
         "language_label": "Language",
         "selected_lang": "Selected language:",
         "download_button": "📄 Download Your Customized Persona",
         "nav_explore": "Internship Explorer｜Word Cloud × Skill Chart",
         "nav_navigator": "Internship Navigator",
         "nav_profile": "Ideal Persona",
+        "menu_header": "🔧 Menu",
     },
 }
 
@@ -82,6 +90,11 @@ def pdf_to_png(pdf_path_or_bytes):
     doc.close()
     return img
 
+def paging(T: dict):
+    st.page_link("streamlit_app.py", label=T["nav_explore"], icon="📊")
+    st.page_link("pages/teacher_agent.py", label=T["nav_navigator"], icon="🔍")
+    st.page_link("pages/test.py", label=T["nav_profile"], icon="💼")
+
 def main():
     # 初始化 session_state
     if "lang_setting" not in st.session_state:
@@ -97,8 +110,9 @@ def main():
     # 側邊欄：導航 & 語言切換
     user_image = "https://www.w3schools.com/howto/img_avatar.png"
     with st.sidebar:
+        st.header(T["menu_header"])
         # 呼叫 paging()，不傳參數
-        paging()
+        paging(T)
 
         selected_lang = st.selectbox(
             T["language_label"],

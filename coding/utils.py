@@ -5,12 +5,16 @@ import os
 from datetime import datetime
 import pandas as pd
 
-def paging():
-    st.page_link("streamlit_app.py", label="｜實習類型探索｜文字雲 × 技能圖", icon="📊")
-    #st.page_link("pages/textmining.py", label="實習類型探索｜文字雲 × 技能圖", icon="📊")
-    st.page_link("pages/teacher_agent.py", label="｜實習職缺導航｜", icon="🔍")
-    st.page_link("pages/test.py", label="｜實習人物誌｜", icon="💼")
+# def paging():
+#     st.page_link("streamlit_app.py", label="｜實習類型探索｜文字雲 × 技能圖", icon="📊")
+#     #st.page_link("pages/textmining.py", label="實習類型探索｜文字雲 × 技能圖", icon="📊")
+#     st.page_link("pages/teacher_agent.py", label="｜實習職缺導航｜", icon="🔍")
+#     st.page_link("pages/test.py", label="｜實習人物誌｜", icon="💼")
     
+def paging(T: dict):
+    st.page_link("streamlit_app.py", label=T["nav_explore"], icon="📊")
+    st.page_link("pages/teacher_agent.py", label=T["nav_navigator"], icon="🔍")
+    st.page_link("pages/test.py", label=T["nav_profile"], icon="💼")
 
 def display_session_msg(container_obj, user_image: Optional[str] = None):
     # Initialize messages list if not present
