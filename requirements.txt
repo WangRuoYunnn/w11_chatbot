@@ -13,3 +13,7 @@ python-dotenv
 reportlab
 PyMuPDF
 pdf2image
+
+fitz 
+pandas 
+pillow
