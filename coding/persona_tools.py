@@ -8,9 +8,10 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 import json
-import os
+import pandas as pd
 
-
+df = pd.read_csv("pages/saved_jobs.csv")
+job_titles = df["Job Title"].dropna().tolist()
 
 
 def persona_name(image_path):
@@ -25,7 +26,7 @@ def persona_name(image_path):
     draw = ImageDraw.Draw(img)
 
     # Step 3: 字型設定
-    font_path = "pages/Montserrat-Bold.ttf"
+    font_path = "fonts/msyh.ttc"
     font_size = 60
     font = ImageFont.truetype(font_path, font_size)
 
@@ -128,7 +129,7 @@ def persona_title(img, raw_titles_text, width=30):
     draw = ImageDraw.Draw(img)
 
     # 字型設定（可和名字不同大小）
-    font_path = "pages/Montserrat-Bold.ttf"
+    font_path = "fonts/msyh.ttc"
     font_size = 23
     font = ImageFont.truetype(font_path, font_size)
 
@@ -225,7 +226,7 @@ def persona_title(img, raw_titles_text, width=30):
     draw = ImageDraw.Draw(img)
 
     # 字型設定（可和名字不同大小）
-    font_path = "pages/Montserrat-Bold.ttf"
+    font_path = "fonts/msyh.ttc"
     font_size = 23
     font = ImageFont.truetype(font_path, font_size)
 
@@ -249,7 +250,7 @@ def persona_hardskill(img: Image.Image, hard_skills: str) -> Image.Image:
     draw = ImageDraw.Draw(img)
 
     # 字型設定（可和名字不同大小）
-    font_path = "pages/Montserrat-Bold.ttf"
+    font_path = "fonts/msyh.ttc"
     font_size = 20
     font = ImageFont.truetype(font_path, font_size)
 
@@ -337,7 +338,7 @@ def persona_softskill(img: Image.Image, soft_skills: str) -> Image.Image:
     draw = ImageDraw.Draw(img)
 
     # 字型設定（可和名字不同大小）
-    font_path = "pages/Montserrat-Bold.ttf"
+    font_path = "fonts/msyh.ttc"
     font_size = 20
     font = ImageFont.truetype(font_path, font_size)
 
@@ -591,18 +592,9 @@ def create_pdf_with_resources_on_image(
     c.save()
     output_buffer.seek(0)
 
-
-
-
-df = pd.read_csv("pages/saved_jobs.csv")
-job_titles = df["Job Title"].dropna().tolist()
 cleaned_raw = get_clean_titles(job_titles)
-
 hard_skills = extract_all_hard_skills_as_text("pages/saved_jobs.csv")
-
-
 resources = parse_ai_text_to_resources(get_ai_resources(cleaned_raw, hard_skills))
 print(resources)
-
 #ai_text = get_ai_resources(cleaned_raw, hard_skills)
 #print(ai_text)
